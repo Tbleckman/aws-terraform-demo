@@ -1,3 +1,11 @@
+#EXISTING CERTIFICATE
+data "aws_acm_certificate" "issued" {
+    domain = "thomasbleckmandev.com"
+    types = ["AMAZON_ISSUED"]
+    statuses = ["ISSUED"]
+    most_recent = true
+}
+
 #ALB
 resource "aws_lb" "tf_load_balancer" {
     name = "tf-alb"
@@ -9,6 +17,47 @@ resource "aws_lb" "tf_load_balancer" {
     enable_deletion_protection = true 
     //tags = {Name = ""}
 }
+
+#ALB LISTENER SETUP
+resource "aws_alb_target_group" "tf_alb_target_group" {
+    name = "app-instances-target-group"
+    port = 80
+    protocol = "HTTP"
+    vpc_id = aws_vpc.terraform_testing.id
+    target_type = "instance"
+
+    //may add health checks down the line...
+}
+
+resource "aws_alb_listener" "https" {
+    load_balancer_arn = aws_lb.tf_load_balancer.arn
+    port = 443
+    protocol = "HTTPS"
+
+    certificate_arn = data.aws_acm_certificate.issued.arn 
+    ssl_policy = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+
+    default_action {
+      type = "forward"
+      target_group_arn = aws_alb_target_group.tf_alb_target_group.arn
+    }
+}
+
+resource "aws_alb_listener" "redirect_http" {
+    load_balancer_arn = aws_lb.tf_load_balancer.arn
+    port = "80"
+    protocol = "HTTP"
+
+    default_action {
+      type = "redirect"
+      redirect {
+        port = "443"
+        protocol = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+}
+
 
 #SECURITY GROUP FOR ALB AND ITS IN/OUT RULES
 resource "aws_security_group" "tf_sg" {
