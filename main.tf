@@ -47,6 +47,8 @@ resource "aws_s3_bucket_public_access_block" "state_public_block" {
 }
 */
 
+
+#VPC
 resource "aws_vpc" "terraform_testing" {
   cidr_block = "10.0.0.0/16"
   
@@ -55,6 +57,22 @@ resource "aws_vpc" "terraform_testing" {
   }
 }
 
+#IGW
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.terraform_testing.id
+}
+
+#ROUTE TABLE FOR VPC
+resource "aws_route_table" "terraform-rt" {
+  vpc_id = aws_vpc.terraform_testing.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+#SUBNETS
 
 resource "aws_subnet" "terraform_testing_public_subnet" {
   vpc_id = aws_vpc.terraform_testing.id
@@ -64,4 +82,46 @@ resource "aws_subnet" "terraform_testing_public_subnet" {
   tags = {
     Name = "Public-Subnet"
   }
+}
+
+resource "aws_subnet" "terraform_testing_public_subnet2" {
+  vpc_id = aws_vpc.terraform_testing.id 
+  availability_zone = "us-east-1b"
+  cidr_block = "10.0.3.0/24"
+
+  tags = {
+    Name = "Public-Subnet2"
+  }
+}
+
+resource "aws_subnet" "terraform_testing_private_subnet1" {
+  vpc_id = aws_vpc.terraform_testing.id
+  availability_zone = "us-east-1a"
+  cidr_block = "10.0.4.0/24"
+
+  tags = {
+    Name = "Private-Subnet1"
+  }
+}
+
+resource "aws_subnet" "terraform_testing_private_subnet2" {
+  vpc_id = aws_vpc.terraform_testing.id 
+  availability_zone = "us-east-1b"
+  cidr_block = "10.0.5.0/24"
+
+  tags = {
+    Name = "Private-Subnet2"
+  }
+}
+
+#ASSOCIATING PUBLIC SUBNETS WITH ROUTE TABLE
+
+resource "aws_route_table_association" "subnet_routing1" {
+  subnet_id = aws_subnet.terraform_testing_public_subnet.id
+  route_table_id = aws_route_table.terraform-rt.id
+}
+
+resource "aws_route_table_association" "subnet_routing2" {
+  route_table_id = aws_route_table.terraform-rt.id
+  subnet_id = aws_subnet.terraform_testing_public_subnet2.id
 }
