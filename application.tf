@@ -13,6 +13,8 @@ resource "aws_instance" "ec2_instance1" {
     instance_type = "t3.micro"
     subnet_id = aws_subnet.terraform_testing_private_subnet1.id
     tags = {Name = "Instance1"}
+
+    iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 }
 
 resource "aws_instance" "ec2_instance2" {
@@ -20,6 +22,8 @@ resource "aws_instance" "ec2_instance2" {
     instance_type = "t3.micro"
     subnet_id = aws_subnet.terraform_testing_private_subnet2.id
     tags = {Name = "Instance2"}
+
+    iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 }
 
 resource "aws_security_group" "ec2_sg" {
