@@ -14,7 +14,9 @@ resource "aws_instance" "ec2_instance1" {
     subnet_id = aws_subnet.terraform_testing_private_subnet1.id
     tags = {Name = "Instance1"}
 
+    vpc_security_group_ids = [ aws_security_group.ec2_sg.id ]
     iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
+    user_data = file("${path.module}/userdata/nginx.sh")
 }
 
 resource "aws_instance" "ec2_instance2" {
@@ -23,7 +25,9 @@ resource "aws_instance" "ec2_instance2" {
     subnet_id = aws_subnet.terraform_testing_private_subnet2.id
     tags = {Name = "Instance2"}
 
+    vpc_security_group_ids = [ aws_security_group.ec2_sg.id ]
     iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
+    user_data = file("${path.module}/userdata/nginx.sh")
 }
 
 resource "aws_security_group" "ec2_sg" {
