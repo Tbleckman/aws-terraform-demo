@@ -18,7 +18,7 @@ resource "aws_lb" "tf_load_balancer" {
     //tags = {Name = ""}
 }
 
-#ALB LISTENER SETUP
+#ALB LISTENER AND TARGET GROUP SETUP
 resource "aws_alb_target_group" "tf_alb_target_group" {
     name = "app-instances-target-group"
     port = 80
@@ -58,6 +58,18 @@ resource "aws_alb_listener" "redirect_http" {
     }
 }
 
+#ATTACH EC2 INSTANCES TO TARGET GROUP
+resource "aws_alb_target_group_attachment" "alb_ec2_attachments1" {
+    target_group_arn = aws_alb_target_group.tf_alb_target_group.arn 
+    target_id = aws_instance.ec2_instance1.id 
+    port = 80
+}
+
+resource "aws_alb_target_group_attachment" "alb_ec2_attachments2" {
+    target_group_arn = aws_alb_target_group.tf_alb_target_group.arn 
+    target_id = aws_instance.ec2_instance2.id 
+    port = 80
+}
 
 #SECURITY GROUP FOR ALB AND ITS IN/OUT RULES
 resource "aws_security_group" "tf_sg" {
