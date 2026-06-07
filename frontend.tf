@@ -1,3 +1,23 @@
+#ROUTE 53 SETUP
+data "aws_route53_zone" "main_zone" {
+    name = "thomasbleckmandev.com"
+    private_zone = false
+}
+
+resource "aws_route53_record" "root" {
+    zone_id = data.aws_route53_zone.main_zone.id
+    name = "thomasbleckmandev.com"
+    type = "A"
+
+    alias {
+        name = aws_lb.tf_load_balancer.dns_name
+        zone_id = aws_lb.tf_load_balancer.id
+        evaluate_target_health = true
+    }
+}
+
+
+
 #EXISTING CERTIFICATE
 data "aws_acm_certificate" "issued" {
     domain = "thomasbleckmandev.com"
@@ -26,7 +46,15 @@ resource "aws_alb_target_group" "tf_alb_target_group" {
     vpc_id = aws_vpc.terraform_testing.id
     target_type = "instance"
 
-    //may add health checks down the line...
+    health_check {
+      path = "/"
+      protocol = "HTTP"
+      matcher = "200"
+      interval = 30
+      timeout = 5
+      healthy_threshold = 2
+      unhealthy_threshold = 2
+    }
 }
 
 resource "aws_alb_listener" "https" {
