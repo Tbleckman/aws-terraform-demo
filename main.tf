@@ -1,9 +1,9 @@
 terraform {
 
   backend "s3" {
-    bucket = "thomaspb-terraform-testing-bucket-435"
-    key = "global/s3/terraform.tfstate"
-    region = "us-east-1"
+    bucket  = "thomaspb-terraform-testing-bucket-435"
+    key     = "global/s3/terraform.tfstate"
+    region  = "us-east-1"
     encrypt = true
   }
 
@@ -51,7 +51,7 @@ resource "aws_s3_bucket_public_access_block" "state_public_block" {
 #VPC
 resource "aws_vpc" "terraform_testing" {
   cidr_block = "10.0.0.0/16"
-  
+
   tags = {
     Name = "wsl-demo-vpc"
   }
@@ -65,14 +65,14 @@ resource "aws_internet_gateway" "igw" {
 resource "aws_eip" "natgwip" {
   domain = "vpc"
 
-  tags = {Name = "nat-gateway-eip"}
+  tags = { Name = "nat-gateway-eip" }
 }
 
 resource "aws_nat_gateway" "natgw" {
   allocation_id = aws_eip.natgwip.id
-  subnet_id = aws_subnet.terraform_testing_public_subnet.id
+  subnet_id     = aws_subnet.terraform_testing_public_subnet.id
 
-  tags = {Name = "natgw"}
+  tags = { Name = "natgw" }
 
   depends_on = [aws_internet_gateway.igw]
 }
@@ -88,20 +88,20 @@ resource "aws_route_table" "terraform_rt" {
 }
 
 resource "aws_route_table" "terraform_private_rt" {
-  vpc_id = aws_vpc.terraform_testing.id 
+  vpc_id = aws_vpc.terraform_testing.id
 
   route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.natgw.id
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.natgw.id
   }
 }
 
 #SUBNETS
 
 resource "aws_subnet" "terraform_testing_public_subnet" {
-  vpc_id = aws_vpc.terraform_testing.id
+  vpc_id            = aws_vpc.terraform_testing.id
   availability_zone = "us-east-1a"
-  cidr_block = "10.0.2.0/24"
+  cidr_block        = "10.0.2.0/24"
 
   tags = {
     Name = "Public-Subnet"
@@ -109,9 +109,9 @@ resource "aws_subnet" "terraform_testing_public_subnet" {
 }
 
 resource "aws_subnet" "terraform_testing_public_subnet2" {
-  vpc_id = aws_vpc.terraform_testing.id 
+  vpc_id            = aws_vpc.terraform_testing.id
   availability_zone = "us-east-1b"
-  cidr_block = "10.0.3.0/24"
+  cidr_block        = "10.0.3.0/24"
 
   tags = {
     Name = "Public-Subnet2"
@@ -119,9 +119,9 @@ resource "aws_subnet" "terraform_testing_public_subnet2" {
 }
 
 resource "aws_subnet" "terraform_testing_private_subnet1" {
-  vpc_id = aws_vpc.terraform_testing.id
+  vpc_id            = aws_vpc.terraform_testing.id
   availability_zone = "us-east-1a"
-  cidr_block = "10.0.4.0/24"
+  cidr_block        = "10.0.4.0/24"
 
   tags = {
     Name = "Private-Subnet1"
@@ -129,9 +129,9 @@ resource "aws_subnet" "terraform_testing_private_subnet1" {
 }
 
 resource "aws_subnet" "terraform_testing_private_subnet2" {
-  vpc_id = aws_vpc.terraform_testing.id 
+  vpc_id            = aws_vpc.terraform_testing.id
   availability_zone = "us-east-1b"
-  cidr_block = "10.0.5.0/24"
+  cidr_block        = "10.0.5.0/24"
 
   tags = {
     Name = "Private-Subnet2"
@@ -141,28 +141,28 @@ resource "aws_subnet" "terraform_testing_private_subnet2" {
 #ASSOCIATING PUBLIC SUBNETS WITH ROUTE TABLE
 
 resource "aws_route_table_association" "subnet_routing1" {
-  subnet_id = aws_subnet.terraform_testing_public_subnet.id
+  subnet_id      = aws_subnet.terraform_testing_public_subnet.id
   route_table_id = aws_route_table.terraform_rt.id
 }
 
 resource "aws_route_table_association" "subnet_routing2" {
   route_table_id = aws_route_table.terraform_rt.id
-  subnet_id = aws_subnet.terraform_testing_public_subnet2.id
+  subnet_id      = aws_subnet.terraform_testing_public_subnet2.id
 }
 
 resource "aws_route_table_association" "subnet_routing_private1" {
   route_table_id = aws_route_table.terraform_private_rt.id
-  subnet_id = aws_subnet.terraform_testing_private_subnet1.id
+  subnet_id      = aws_subnet.terraform_testing_private_subnet1.id
 }
 
 resource "aws_route_table_association" "subnet_routing_private2" {
   route_table_id = aws_route_table.terraform_private_rt.id
-  subnet_id = aws_subnet.terraform_testing_private_subnet2.id
+  subnet_id      = aws_subnet.terraform_testing_private_subnet2.id
 }
 
 #TEMP MOVE BLOCK
 
 moved {
   from = aws_route_table.terraform-rt
-  to = aws_route_table.terraform_rt
+  to   = aws_route_table.terraform_rt
 }

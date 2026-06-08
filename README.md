@@ -8,3 +8,7 @@ Since this is not yet complete, I will currently explain the features of it here
 	* Public subnets having routing associations with the main route table to the IGW
 	* Private subnets having routing associations with the private route table to the NATGW
 
+- Frontend:
+	* ALB in public subnets
+	* Security Group for the alb to accept inbound http(s) traffic and allow all outbound
+

@@ -1,6 +1,6 @@
 #!/bin/bash
 dnf update -y
 dnf install -y nginx
-systemc1 enable nginx
-systemc1 start nginx
-echo "Hello from $(hostname)" > usr/share/nginx/html/index.html 
+systemctl enable nginx
+systemctl start nginx
+echo "<h1> Hello from $(hostname) <h1>" > usr/share/nginx/html/index.html 
