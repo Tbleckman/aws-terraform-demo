@@ -3,8 +3,11 @@ name: Terraform Checks
 on:
   push:
     branches:
+      - test
       - main
   pull_request:
+    branches:
+      - main
 
 permissions:
   id-token: write
@@ -34,3 +37,7 @@ jobs:
       - run: terraform plan
 
       - run: terraform validate
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
