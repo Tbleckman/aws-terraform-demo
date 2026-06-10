@@ -1,4 +1,22 @@
-Description of Terraform project, being a multi-tier website infrastructure:
+# AWS Terraform Multi-Tier Infrastructure
+
+A production-style AWS infrastructure project built with Terraform that demonstrates networking, load balancing, compute, security, CI/CD, and Infrastructure as Code best practices.
+
+
+Technologies:
+
+
+* Terraform
+* AWS VPC
+* EC2
+* ALB
+* Route 53
+* ACM
+* IAM
+* SSM
+* DynamoDB
+* Github Actions
+* OIDC
 
 
 
