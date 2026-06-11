@@ -20,6 +20,7 @@ Brief Architecture Rundown:
 - EC2 Instances in private subnets
 - Nginx web server
 - Flask API backend
+- Boto3
 
 ### Data Tier
 - DynamoDB
@@ -29,26 +30,6 @@ Brief Architecture Rundown:
 - GitHub Actions
 - OIDC Authentication
 - Terraform Validate / Plan
-
-
-
-
-Technologies:
-
-
-* Terraform
-* AWS VPC
-* EC2
-* Boto3 + Flask
-* ALB
-* Route 53
-* ACM
-* IAM
-* SSM
-* DynamoDB
-* Gateway Endpoint
-* Github Actions
-* OIDC
 
 
 
