@@ -279,4 +279,4 @@ server {
 }
 EOF
 
-systemct1 restart nginx
+systemctl restart nginx
