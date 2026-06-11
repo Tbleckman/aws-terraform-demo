@@ -1,7 +1,12 @@
 # AWS Terraform Multi-Tier Infrastructure
 
+
 A production-style AWS infrastructure project built with Terraform that demonstrates networking, load balancing, compute, security, CI/CD, and Infrastructure as Code best practices.
 
+
+## Architecture Diagram
+
+![Architecture Diagram](./diagrams/architecture-diagram.png)
 
 Technologies:
 
@@ -9,12 +14,14 @@ Technologies:
 * Terraform
 * AWS VPC
 * EC2
+* Boto3 + Flask
 * ALB
 * Route 53
 * ACM
 * IAM
 * SSM
 * DynamoDB
+* Gateway Endpoint
 * Github Actions
 * OIDC
 
@@ -37,19 +44,22 @@ Infrastructure:
 	* ALB listeners redirects HTTP to HTTPS traffic to the target group
 	* Target groups route traffic towards the EC2 instances in the private subnets by HTTP
 	* Website served statically via nginx on EC2 instances
+	* Option for users to input their name, handle, and description to be stored in a DynamoDB table
 
 
 - Application
 	* 2 EC2 instances hosted on separate private subnets
 	* EC2 defined by AMI (Amazon Linux, most recent)
 	* Instances use T3 Micro
-	* Hosts static website via nginx
+	* Hosts static website via nginx, Flask, and Boto3
+	* Sends API calls for inputs on website to DynamoDB via gateway endpoint
 	* Allows all egress outbound and tcp ingress
 
 
 - Database
-	* Currently no functionality
-	* In the future, I'm planning for it to store handles that users input on the static website (ie email, LinkedIn)
+	* DynamoDB
+	* Connected to EC2 instances through port 80 TCP
+	* When users put their handles through the frontend, the api request is forwarded to DynamoDB to store
 
 
 
@@ -62,7 +72,9 @@ Infrastructure Workflow:
 4. ALB Listener directs traffic towards ALB target group
 5. Target group route traffic to EC2 instance in private subnet via HTTP
 6. EC2 ingress takes in traffic and serves requested website via nginx
-7. Traffic goes out EC2 egress and routes in reverse back to the user
+7. a. Users can optionally add their name, handle, and a description to an input box
+7. b. Input is sent from EC2 to DynamoDB via a gateway endpoint, and confirms to user it was either successful or unsuccessful
+8. Traffic goes out EC2 egress and routes in reverse back to the user
 
 
 
