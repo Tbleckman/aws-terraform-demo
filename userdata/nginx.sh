@@ -85,6 +85,13 @@ cat <<'EOF' > /usr/share/nginx/html/index.html
   <header>
     <h1>Thomas Bleckman</h1>
     <p>Cloud / Infrastructure / Terraform Portfolio Project</p>
+    
+    <nav style="text-align: center; margin-top: 15px;">
+      <a href="https://www.linkedin.com/in/thomas-bleckman" target="_blank" rel="noopener noreferrer" style="color: white; text-decoration: underline;"> Thomas Bleckman </a>  
+      <span style="color: white; margin: 0 10px;">|</span>
+      <a href="https://github.com/Tbleckman/aws-terraform-demo" target="_blank" rel="noopener noreferrer" style="color: white; text-decoration: underline;"> GitHub Project Repo </a>
+    </nav>
+  
   </header>
 
   <main>
