@@ -89,6 +89,22 @@ cat <<'EOF' > /usr/share/nginx/html/index.html
 
   <main>
     <section class="card">
+      <h2>Architecture Diagram</h2>
+      <img
+        src="architecture-diagram.png"
+        alt="AWS Architecture Diagram"
+        style="width:100%; border-radius:12px; border:1px solid #e5e7eb;"
+      />
+      <p>
+        This diagram shows the request flow from Route 53 and the Application Load Balancer
+        to private EC2 instances running Nginx and Flask, with form submissions written to
+        DynamoDB through a Gateway VPC Endpoint.
+      </p>
+    </section>
+
+
+
+    <section class="card">
       <h2>About This Project</h2>
       <p>
         This website is being served from an EC2 instance provisioned with Terraform.
@@ -187,6 +203,9 @@ cat <<'EOF' > /usr/share/nginx/html/index.html
 </body>
 </html>
 EOF
+
+curl -L -o /usr/share/nginx/html/architecture-diagram.png \
+https://raw.githubusercontent.com/Tbleckman/aws-terraform-demo/main/diagrams/architecture-diagram.png
 
 sed -i "s/HOSTNAME_PLACEHOLDER/$(hostname)/g" /usr/share/nginx/html/index.html
 

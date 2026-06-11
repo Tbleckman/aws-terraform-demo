@@ -8,6 +8,31 @@ A production-style AWS infrastructure project built with Terraform that demonstr
 
 ![Architecture Diagram](./diagrams/architecture-diagram.png)
 
+Brief Architecture Rundown:
+
+### Presentation Tier
+- Route 53
+- ACM Certificate
+- Application Load Balancer
+- Public Subnets across two Availability Zones
+
+### Application Tier
+- EC2 Instances in private subnets
+- Nginx web server
+- Flask API backend
+
+### Data Tier
+- DynamoDB
+- DynamoDB Gateway Endpoint
+
+### CI/CD
+- GitHub Actions
+- OIDC Authentication
+- Terraform Validate / Plan
+
+
+
+
 Technologies:
 
 
