@@ -1,4 +1,4 @@
-#EC2 INSTANCE CONFIGURATION
+#EC2 INSTANCE / ASG CONFIGURATION
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -8,6 +8,47 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+resource "aws_launch_template" "EC2_ASG_template" {
+  name_prefix = "tf-app-"
+  image_id = data.aws_ami.amazon_linux.id
+  instance_type = "t3.micro"
+  
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_profile.name
+  }
+
+  vpc_security_group_ids = [ aws_security_group.ec2_sg.id ]
+  user_data = base64encode(file("${path.module}/userdata/nginx.sh")) 
+  # ^ had to use encode since launch templates don't do it automatically unlike aws_instances
+}
+
+resource "aws_autoscaling_group" "EC2_ASG_GROUP" {
+  name = "Terraform-Project-EC2-ASG"
+  min_size = 2
+  max_size = 4
+  desired_capacity = 2
+
+  vpc_zone_identifier = [ aws_subnet.terraform_testing_private_subnet1.id, aws_subnet.terraform_testing_private_subnet2.id ]
+  launch_template {
+    id = aws_launch_template.EC2_ASG_template.id 
+    version = "$Latest"
+  }
+  target_group_arns = [ aws_alb_target_group.tf_alb_target_group.arn ]
+
+  #health checks
+  health_check_type = "ELB"
+  health_check_grace_period = 300
+
+  tag {
+    key = "Name"
+    value = "tf-app-asg-instance"
+    propagate_at_launch = true
+  }
+}
+
+
+#Commented out old EC2 instance implementation for ASG instead
+/*
 resource "aws_instance" "ec2_instance1" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
@@ -31,6 +72,7 @@ resource "aws_instance" "ec2_instance2" {
   user_data                   = file("${path.module}/userdata/nginx.sh")
   user_data_replace_on_change = true
 }
+*/
 
 resource "aws_security_group" "ec2_sg" {
   vpc_id = aws_vpc.terraform_testing.id
