@@ -116,6 +116,8 @@ cat <<'EOF' > /usr/share/nginx/html/index.html
       <p>
         This website is being served from an EC2 instance provisioned with Terraform.
         Traffic is routed through an Application Load Balancer as part of a multi-tier AWS architecture.
+        EC2 instances communicate with DynamoDB through Flask to store user handles. Infrastructure is automatically validated
+        and applied through GitHub Actions.
       </p>
     </section>
 
@@ -123,7 +125,7 @@ cat <<'EOF' > /usr/share/nginx/html/index.html
       <h2>Architecture</h2>
       <p>
         Current stack includes a custom VPC, public subnets, private application instances,
-        security groups, an ALB, Route 53, ACM, and Nginx running on EC2.
+        security groups, an ALB, Route 53, ACM, Nginx running on EC2 with Flask, and DynamoDB
       </p>
     </section>
 
@@ -137,7 +139,13 @@ cat <<'EOF' > /usr/share/nginx/html/index.html
         <span>Route 53</span>
         <span>ACM</span>
         <span>Nginx</span>
+        <span>Flask</span>
+        <span>Internet Gateway</span>
+        <span>NAT Gateway</span>
+        <span>DynamoDB</span>
+        <span>Gateway Endpoint</span>
         <span>Linux</span>
+        <span>Github Actions</span>
       </div>
     </section>
 
