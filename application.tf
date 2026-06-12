@@ -9,39 +9,39 @@ data "aws_ami" "amazon_linux" {
 }
 
 resource "aws_launch_template" "EC2_ASG_template" {
-  name_prefix = "tf-app-"
-  image_id = data.aws_ami.amazon_linux.id
+  name_prefix   = "tf-app-"
+  image_id      = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
-  
+
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_profile.name
   }
 
-  vpc_security_group_ids = [ aws_security_group.ec2_sg.id ]
-  user_data = base64encode(file("${path.module}/userdata/nginx.sh")) 
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+  user_data              = base64encode(file("${path.module}/userdata/nginx.sh"))
   # ^ had to use encode since launch templates don't do it automatically unlike aws_instances
 }
 
 resource "aws_autoscaling_group" "EC2_ASG_GROUP" {
-  name = "Terraform-Project-EC2-ASG"
-  min_size = 2
-  max_size = 4
+  name             = "Terraform-Project-EC2-ASG"
+  min_size         = 2
+  max_size         = 4
   desired_capacity = 2
 
-  vpc_zone_identifier = [ aws_subnet.terraform_testing_private_subnet1.id, aws_subnet.terraform_testing_private_subnet2.id ]
+  vpc_zone_identifier = [aws_subnet.terraform_testing_private_subnet1.id, aws_subnet.terraform_testing_private_subnet2.id]
   launch_template {
-    id = aws_launch_template.EC2_ASG_template.id 
+    id      = aws_launch_template.EC2_ASG_template.id
     version = "$Latest"
   }
-  target_group_arns = [ aws_alb_target_group.tf_alb_target_group.arn ]
+  target_group_arns = [aws_alb_target_group.tf_alb_target_group.arn]
 
   #health checks
-  health_check_type = "ELB"
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
   tag {
-    key = "Name"
-    value = "tf-app-asg-instance"
+    key                 = "Name"
+    value               = "tf-app-asg-instance"
     propagate_at_launch = true
   }
 }
