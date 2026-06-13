@@ -54,6 +54,21 @@ resource "aws_iam_role_policy_attachment" "cw_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
+#TARGET TRACKING POLICY FOR CLOUDWATCH
+resource "aws_autoscaling_policy" "cpu_target_tracking" {
+  name                   = "cpu-target-tracking"
+  policy_type            = "TargetTrackingScaling"
+  autoscaling_group_name = aws_autoscaling_group.EC2_ASG_GROUP.name
+
+  target_tracking_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ASGAverageCPUUtilization"
+    }
+    target_value = 60.0
+  }
+}
+
+
 #MONITORING SECTION FOR HIGH CPU ALARM + UNHEALTHY TARGETS
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   alarm_name          = "tf-project-high-cpu"
