@@ -80,7 +80,10 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   statistic           = "Average"
   threshold           = 80
 
-  dimensions = { AutoScalingGroupName = aws_autoscaling_group.EC2_ASG_GROUP.name }
+  alarm_actions             = [aws_sns_topic.cloudwatch_notification.arn]
+  ok_actions                = [aws_sns_topic.cloudwatch_notification.arn]
+  insufficient_data_actions = [aws_sns_topic.cloudwatch_notification.arn]
+  dimensions                = { AutoScalingGroupName = aws_autoscaling_group.EC2_ASG_GROUP.name }
 }
 
 resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
@@ -93,6 +96,9 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
   statistic           = "Average"
   threshold           = 0
 
+  alarm_actions             = [aws_sns_topic.cloudwatch_notification.arn]
+  ok_actions                = [aws_sns_topic.cloudwatch_notification.arn]
+  insufficient_data_actions = [aws_sns_topic.cloudwatch_notification.arn]
   dimensions = {
     TargetGroup  = aws_alb_target_group.tf_alb_target_group.arn_suffix
     LoadBalancer = aws_lb.tf_load_balancer.arn_suffix
@@ -118,6 +124,18 @@ resource "aws_cloudwatch_log_group" "nginx_error" {
 resource "aws_cloudwatch_log_group" "cloud_init" {
   name              = "/portfolio/cloud-init"
   retention_in_days = 14
+}
+
+
+#SNS TOPIC
+resource "aws_sns_topic" "cloudwatch_notification" {
+  name = "tf-cloudwatch-notification"
+}
+
+resource "aws_sns_topic_subscription" "email_sub" {
+  topic_arn = aws_sns_topic.cloudwatch_notification.arn
+  protocol  = "email"
+  endpoint  = "thomasbleckman@gmail.com"
 }
 
 #Commented out old EC2 instance implementation for ASG instead
