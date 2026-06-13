@@ -1,6 +1,6 @@
 #!/bin/bash
 dnf update -y
-dnf install -y nginx python3 python3-pip
+dnf install -y nginx python3 python3-pip amazon-cloudwatch-agent
 
 pip3 install flask boto3
 
@@ -8,6 +8,42 @@ systemctl stop ecs || true
 systemctl disable ecs || true
 systemctl enable nginx
 systemctl start nginx
+
+cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/nginx/access.log",
+            "log_group_name": "/portfolio/nginx/access",
+            "log_stream_name": "{instance_id}"
+          },
+          {
+            "file_path": "/var/log/nginx/error.log",
+            "log_group_name": "/portfolio/nginx/error",
+            "log_stream_name": "{instance_id}"
+          },
+          {
+            "file_path": "/var/log/cloud-init-output.log",
+            "log_group_name": "/portfolio/cloud-init",
+            "log_stream_name": "{instance_id}"
+          }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config \
+  -m ec2 \
+  -c file:/opt/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
+  -s
+
+
 #echo "<h1> Hello from $(hostname) <h1>" > /usr/share/nginx/html/index.html 
 
 cat <<'EOF' > /usr/share/nginx/html/index.html

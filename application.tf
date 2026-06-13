@@ -39,6 +39,8 @@ resource "aws_autoscaling_group" "EC2_ASG_GROUP" {
   health_check_type         = "ELB"
   health_check_grace_period = 300
 
+  depends_on = [ aws_iam_role_policy_attachment.cw_policy_attachment ]
+
   tag {
     key                 = "Name"
     value               = "tf-app-asg-instance"
@@ -46,6 +48,62 @@ resource "aws_autoscaling_group" "EC2_ASG_GROUP" {
   }
 }
 
+#ADDING CLOUDWATCH AGENT POLICY TO ASG TEMPLATE
+resource "aws_iam_role_policy_attachment" "cw_policy_attachment" {
+  role = aws_iam_role.ec2_ddb_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+#MONITORING SECTION FOR HIGH CPU ALARM + UNHEALTHY TARGETS
+resource "aws_cloudwatch_metric_alarm" "high_cpu" {
+  alarm_name = "tf-project-high-cpu"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods = 2
+  metric_name = "CPUUtilization"
+  namespace = "AWS/EC2"
+  period = 300
+  statistic = "Average"
+  threshold = 80
+
+  dimensions = { AutoScalingGroupName = aws_autoscaling_group.EC2_ASG_GROUP.name }
+}
+
+resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
+  alarm_name = "alb-unhealthy-targets"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods = 1
+  metric_name = "UnHealthyHostCount"
+  namespace = "AWS/ApplicationELB"
+  period = 60
+  statistic = "Average"
+  threshold = 0
+
+  dimensions = { 
+    TargetGroup = aws_alb_target_group.tf_alb_target_group.arn_suffix
+    LoadBalancer = aws_lb.tf_load_balancer.arn_suffix
+  }
+}
+
+#LOGGING SECTION FOR WEBSITE
+resource "aws_cloudwatch_log_group" "nginx" {
+  name = "/portfolio/nginx"
+  retention_in_days = 14 #so it doesnt last forever...
+}
+
+resource "aws_cloudwatch_log_group" "nginx_access" {
+  name = "/portfolio/nginx/access"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_log_group" "nginx_error" {
+  name = "/portfolio/nginx/error"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_log_group" "cloud_init" {
+  name = "/portfolio/cloud-init"
+  retention_in_days = 14
+}
 
 #Commented out old EC2 instance implementation for ASG instead
 /*
