@@ -13,6 +13,15 @@ resource "aws_launch_template" "EC2_ASG_template" {
   image_id      = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
 
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size           = 20
+      volume_type           = "gp3"
+      delete_on_termination = true
+    }
+  }
+
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_profile.name
   }
@@ -33,6 +42,14 @@ resource "aws_autoscaling_group" "EC2_ASG_GROUP" {
     id      = aws_launch_template.EC2_ASG_template.id
     version = "$Latest"
   }
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
+  }
+
   target_group_arns = [aws_alb_target_group.tf_alb_target_group.arn]
 
   #health checks
@@ -46,6 +63,12 @@ resource "aws_autoscaling_group" "EC2_ASG_GROUP" {
     value               = "tf-app-asg-instance"
     propagate_at_launch = true
   }
+}
+
+#GIVE EC2 ROLE ECR PULL ACCESS
+resource "aws_iam_role_policy_attachment" "ec2_ecr_readonly" {
+  role       = aws_iam_role.ec2_ddb_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
 #ADDING CLOUDWATCH AGENT POLICY TO ASG TEMPLATE
