@@ -161,6 +161,34 @@ resource "aws_sns_topic_subscription" "email_sub" {
   endpoint  = "thomasbleckman@gmail.com"
 }
 
+#CLOUDWATCH DASHBOARD
+resource "aws_cloudwatch_dashboard" "main" {
+  dashboard_name = "asg-performance-dashboard"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            ["AWS/EC2", "CPUUtilization", "AutoScalingGroupName", aws_autoscaling_group.EC2_ASG_GROUP],
+            ["AWS/AutoScaling", "GroupInServiceInstances", "AutoScalingGroupName", aws_autoscaling_group.EC2_ASG_GROUP]
+          ]
+          period = 300
+          stat   = "Average"
+          region = "us-east-1"
+          title  = "ASG Core Metrics (Avg CPU & Instance Count)"
+          yAxis  = { left = { min = 0 } }
+        }
+      }
+    ]
+  })
+}
+
 #Commented out old EC2 instance implementation for ASG instead
 /*
 resource "aws_instance" "ec2_instance1" {
