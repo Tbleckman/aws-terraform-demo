@@ -6,7 +6,7 @@ A production-style AWS infrastructure project built with Terraform that demonstr
 
 ## Architecture Diagram
 
-![Architecture Diagram](./diagrams/architecture-diagram.png)
+![Architecture Diagram](./app/static/architecture-diagram.png)
 
 Brief Architecture Rundown:
 
