@@ -1,7 +1,7 @@
 # AWS Terraform Multi-Tier Infrastructure
 
 
-A production-style AWS infrastructure project built with Terraform that demonstrates networking, load balancing, auto scaling, monitoring/alerting, security, CI/CD, and Infrastructure as Code best practices.
+A production-style AWS infrastructure project built with Terraform that demonstrates networking, load balancing, auto scaling, containerized deployments, monitoring/alerting, security, and CI/CD with Infrastructure as Code best practices.
 
 
 ## Architecture Diagram
@@ -19,17 +19,22 @@ Brief Architecture Rundown:
 ### Application Tier
 - Auto Scaling Group (2-4 EC2 instances) across private subnets in two AZs
 - Launch Template (Amazon Linux 2023, t3.micro)
-- Flask backend (via systemd service) + Boto3 for DynamoDB access
+- Dockerized Flask app (Gunicorn) pulled from ECR and run on each instance via user data
 - Target tracking scaling policy (60% average CPU)
 
 ### Data Tier
-- DynamoDB table (linkedin user-handles)
+- DynamoDB table (linkedin user-handles / contact form submissions)
 - DynamoDB Gateway VPC Endpoint (private-subnet access without NAT/internet)
 
-#Monitoring & Alerting
-- CloudWatch Agent on each instances (nginx access / error logs, cloud-init logs)
+### Container Registry
+- ECR repository (portfolio-app) with scan-on push enabled
+- Instances authenticate via IAM instance profile and pull the latest image on boot
+
+### Monitoring & Alerting
+- CloudWatch Agent on each instances (cloud-init logs; container/app logs as configured)
 - CloudWatch Alarms: high ASG CPU utilization, unhealthy ALB targets
 - SNS topic with email subscription for alarm notifications
+- CloudWatch Dashboard for ASG CPU and instance count
 
 ### CI/CD
 - GitHub Actions
@@ -60,7 +65,8 @@ Infrastructure Details:
 - Application
 	* Auto Scaling Group (min 2, max 4, desired 2) spans both private subnets
 	* Instances launched from a shared Launch Template (latest Amazon Linux AMI, t3.micro)
-	* Nginx serves the static portfolio site and proxies /api/* to a local Flask app
+	* On boot, each instance installs Docker, authenticates to ECR, and pulls/runs the portfolio-app container
+	* Container runs a Flask app (via Gunicorn) on port 5000, mapped to host port 80
 	* Flask app (boto3) handles a contact form submission and writes entries to DynamoDB
 	* IAM instance profile grants:
 		* DynamoDB read/write (GetItem, PutItem, UpdateItem, Query, DescribeTable)
@@ -69,12 +75,12 @@ Infrastructure Details:
 	* Security group allows inbound HTTP (80) from the ALB only, and all outbound traffic
 
 - Database
-	* DynamoDB table to store LinkedIn user-handles (pay-per-request, single-attribute hash key)
-	* Stores contact form submissions (name, LinkedIn, message, timestamp, UUID)
+	* DynamoDB table to store LinkedIn user-handles (name, LinkedIn, message, timestamp, UUID)
+	* Pay-per-request, single-attribute hash ke
 	* Reached privately from the ASG instances via a Gateway VPC Endpoint -- no internet egress required
 
 - Monitoring & Alerting
-	* CloudWatch Agent collects nginx access / error logs and cloud-init logs into dedicated log groups
+	* CloudWatch Agent collects cloud-init logs into into dedicated log groups
 	* High CPU alarm on the ASG (>80% over 2 periods) triggers SNS notification
 	* Unhealthy target alarm on the ALB target group triggers SNS notification
 	* SNS topic emails alerts to the project owner
@@ -89,7 +95,7 @@ Infrastructure Workflow:
 3. IGW routes traffic towards my ALB listeners (if requested by HTTP --> redirect into HTTPS)
 4. ALB Listener directs traffic towards ALB target group
 5. Target group route traffic to a healthy ASG instance on port 80
-6. Nginx serves the static site, or proxies /api/* requests to the local Flask app
+6. The instance runs a Dcoker container (pulled from ECR on boot) serving the Flask app via Gunicorn on port 5000, mapped to host port 80
 7. For contact form submissions, Flask writes the entry to DynamoDB via the Gateway VPC Endpoint
 8. CloudWatch Agent ships logs/metrics; alarms notify via SNS if thresholds are breached
 9. ASG scales in/out based on average CPU utilization
@@ -104,3 +110,18 @@ CI/CD:
 	* Pipeline runs terraform fmt -check, init, plan, and validate on every run
 	* On merge to main, the pipeline automatically runs terraform apply -auto-approve
 
+
+## Lessons I've Learned
+- Importance of logging
+	* While integrating Docker into my ASG to containerize my application, my instances were healthy, yet I couldn't connect to my website, its health subdomain, or use SSM to find the issue
+	* From using the EC2 logs, however, I was able to identify that the issue was that the EC2 instances didn't have enough space to download Docker, and solve the issue from there (EC2 booting with an EBS volume)
+	* Understood the importance of troubleshooting via logs
+- Making a diagram to represent my infrastructure
+	* A README just giving the workflows and infrastructure are important, but it does not give a first-time looker a holistic view of how the infrastructure welds together
+	* Diagram accomplishes exactly that, reducing the time it takes for someone to understand my project, as well as making the worklfow of it easier to understand
+
+Possible Next Steps
+* Move from ASG to ECS/Fargate
+* Structure flat .tf files into reusable modules (networking, frontend, application, data, monitoring)
+* Add vairables.tf / outputs.tf to remove hardcoded values
+* Update diagram to change static EC2 to ASG (or ECS/Fargate depending on when I complete that), SNS, CloudWatch, etc.
