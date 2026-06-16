@@ -135,7 +135,7 @@ resource "aws_ecs_service" "portfolio_app" {
   launch_type     = "FARGATE"
 
   lifecycle {
-    ignore_changes = [ desired_count ]
+    ignore_changes = [desired_count]
   }
 
   network_configuration {
