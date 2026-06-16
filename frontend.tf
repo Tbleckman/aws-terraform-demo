@@ -46,8 +46,12 @@ resource "aws_alb_target_group" "tf_alb_target_group" {
   vpc_id      = aws_vpc.terraform_testing.id
   target_type = "ip"
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   health_check {
-    path                = "/"
+    path                = "/health"
     protocol            = "HTTP"
     matcher             = "200"
     interval            = 30

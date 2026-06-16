@@ -24,7 +24,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 
 resource "aws_iam_role_policy_attachment" "ecs_execution_policy" {
   role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionPolicy"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 #MAKE NEW DYNAMODB ACCESS ROLE SINCE TRUST POLICY IS FOR EC2
@@ -48,15 +48,20 @@ resource "aws_iam_role_policy" "ecs_dynamodb_access_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Effect  = "Allow"
-    Action = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:UpdateItem",
-      "dynamodb:Query",
-      "dynamodb:DescribeTable"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+          "dynamodb:DescribeTable"
+        ]
+        Resource = aws_dynamodb_table.tf_ddb.arn
+      }
     ]
-    Resource = aws_dynamodb_table.tf_ddb.arn
+
   })
 }
 
