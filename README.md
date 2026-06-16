@@ -122,5 +122,4 @@ CI/CD:
 Possible Next Steps
 * Structure flat .tf files into reusable modules (networking, frontend, application, data, monitoring)
 * Add vairables.tf / outputs.tf to remove hardcoded values
-* Add ECS esrvice autho scaling (Application Auto Scaling with CPU target tracking)
 * Update architecture diagram to reflect the ECS Fargate architecture

@@ -109,7 +109,7 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   insufficient_data_actions = [aws_sns_topic.cloudwatch_notification.arn]
   dimensions = {
     ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.portfolio-app.name
+    ServiceName = aws_ecs_service.portfolio_app.name
   }
 }
 
@@ -130,6 +130,32 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
   dimensions = {
     TargetGroup  = aws_alb_target_group.tf_alb_target_group.arn_suffix
     LoadBalancer = aws_lb.tf_load_balancer.arn_suffix
+  }
+}
+
+resource "aws_appautoscaling_target" "ecs_service" {
+  max_capacity       = 4
+  min_capacity       = 1
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.portfolio_app.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "ecs_cpu_tracking" {
+  name               = "ecs-cpu-target-tracking"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_service.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_service.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_service.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = 60
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 120
+
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
   }
 }
 

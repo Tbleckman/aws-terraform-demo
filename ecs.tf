@@ -128,7 +128,7 @@ resource "aws_security_group_rule" "ecs_allow_outbound" {
 
 #ECS SERVICE
 
-resource "aws_ecs_service" "portfolio-app" {
+resource "aws_ecs_service" "portfolio_app" {
   name            = "portfolio-app-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.portfolio_app.arn
