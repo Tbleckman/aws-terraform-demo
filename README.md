@@ -17,10 +17,9 @@ Brief Architecture Rundown:
 - Public Subnets across two Availability Zones
 
 ### Application Tier
-- Auto Scaling Group (2-4 EC2 instances) across private subnets in two AZs
-- Launch Template (Amazon Linux 2023, t3.micro)
-- Dockerized Flask app (Gunicorn) pulled from ECR and run on each instance via user data
-- Target tracking scaling policy (60% average CPU)
+- ECS Fargate service (2 tasks) across private subnets in two AZs
+- Fargate tasks run the containerized Flask app pulled directly from ECR
+- Separate IAM roles for task execution and task runtime (least-privilege)
 
 ### Data Tier
 - DynamoDB table (linkedin user-handles / contact form submissions)
@@ -28,13 +27,12 @@ Brief Architecture Rundown:
 
 ### Container Registry
 - ECR repository (portfolio-app) with scan-on push enabled
-- Instances authenticate via IAM instance profile and pull the latest image on boot
+- Fargate tasks authenticate via the ECS task execution role and pull the latest image on startup
 
 ### Monitoring & Alerting
-- CloudWatch Agent on each instances (cloud-init logs; container/app logs as configured)
-- CloudWatch Alarms: high ASG CPU utilization, unhealthy ALB targets
+- CloudWatch log group with 14-day retention for ECS container/app logs (via awslogs driver)
+- CloudWatch Alarms: high ECS service CPU utilization, unhealthy ALB targets
 - SNS topic with email subscription for alarm notifications
-- CloudWatch Dashboard for ASG CPU and instance count
 
 ### CI/CD
 - GitHub Actions
@@ -60,31 +58,29 @@ Infrastructure Details:
 	* R53 record points the domain at the ALB
 	* ACM certificate secures HTTPS
 	* ALB listener redirects HTTP to HTTPS; HTTPS listener forwards to the target group
-	* Target group performs health checks and routes traffic to ASG instances on port 80
+	* Target group (type:ip) performs health checks and routes traffic to ASG instances on port 5000
 
 - Application
-	* Auto Scaling Group (min 2, max 4, desired 2) spans both private subnets
-	* Instances launched from a shared Launch Template (latest Amazon Linux AMI, t3.micro)
-	* On boot, each instance installs Docker, authenticates to ECR, and pulls/runs the portfolio-app container
-	* Container runs a Flask app (via Gunicorn) on port 5000, mapped to host port 80
-	* Flask app (boto3) handles a contact form submission and writes entries to DynamoDB
-	* IAM instance profile grants:
-		* DynamoDB read/write (GetItem, PutItem, UpdateItem, Query, DescribeTable)
-		* SSM Managed Instance Core (for Session Manager access, no SSH needed)
-		* CloudWatch Agent Server Policy (for log/metric shipping)
-	* Security group allows inbound HTTP (80) from the ALB only, and all outbound traffic
+	* ECS Fargate service (desired count: 2) spans both private subnets
+	* Tasks use awsvpc networking mode -- each task gets its own ENI and private IP
+	* Fargate pulls the portfolio-app image from ECR on task startup (no EC2, no user data)
+	* Each task runs a Flask app (via Guinicorn) on port 5000
+	* Flask app (boto3) handles contact form submissions and writes entries to DynamoDB
+	* Two IAM roles follow the principle of least privilege
+		* Task Execution Role: grants ECS the ability to pull images from ECR and ship logs to Cloudwatch
+		* Task Role: grants the running container DynamoDB access only (GetItem, PutItem, UpdateItem, Query, DescribeTable)
+	* ECS security group allows inbound TCP 5000 from the ALB security group only, and all outbound traffic
 
 - Database
 	* DynamoDB table to store LinkedIn user-handles (name, LinkedIn, message, timestamp, UUID)
-	* Pay-per-request, single-attribute hash ke
-	* Reached privately from the ASG instances via a Gateway VPC Endpoint -- no internet egress required
+	* Pay-per-request, single-attribute hash key
+	* Reached privately from the Fargate tasks via a Gateway VPC Endpoint -- no internet egress required
 
 - Monitoring & Alerting
-	* CloudWatch Agent collects cloud-init logs into into dedicated log groups
-	* High CPU alarm on the ASG (>80% over 2 periods) triggers SNS notification
+	* CloudWatch log group (/ecs/portfolio/app) collects container logs via the awslogs log driver
+	* High CPU alarm on the ECS service (>80% over 2 periods) triggers SNS notification
 	* Unhealthy target alarm on the ALB target group triggers SNS notification
 	* SNS topic emails alerts to the project owner
-	* Target tracking scaling policy automatically adjusts ASG capacity to maintain ~60% average CPU
 
 
 Infrastructure Workflow:
@@ -94,12 +90,11 @@ Infrastructure Workflow:
 2. Route 53 resolves to my IGW
 3. IGW routes traffic towards my ALB listeners (if requested by HTTP --> redirect into HTTPS)
 4. ALB Listener directs traffic towards ALB target group
-5. Target group route traffic to a healthy ASG instance on port 80
-6. The instance runs a Dcoker container (pulled from ECR on boot) serving the Flask app via Gunicorn on port 5000, mapped to host port 80
+5. Target group route traffic to a healthy Fargate task on port 5000
+6. The Fargate task runs the portfolio-app container (pulled from ECR on startup), serving the Flask app via Gunicorn
 7. For contact form submissions, Flask writes the entry to DynamoDB via the Gateway VPC Endpoint
-8. CloudWatch Agent ships logs/metrics; alarms notify via SNS if thresholds are breached
-9. ASG scales in/out based on average CPU utilization
-10. Response traffic returns through the ALB back to the user
+8. Cloudwatch collects container logs via awslogs; alarms notify via SNS if thresholds are breached
+9. Response traffic returns through the ALB back to the user
 
 
 
@@ -114,14 +109,18 @@ CI/CD:
 ## Lessons I've Learned
 - Importance of logging
 	* While integrating Docker into my ASG to containerize my application, my instances were healthy, yet I couldn't connect to my website, its health subdomain, or use SSM to find the issue
-	* From using the EC2 logs, however, I was able to identify that the issue was that the EC2 instances didn't have enough space to download Docker, and solve the issue from there (EC2 booting with an EBS volume)
+	* From using the EC2 logs, however, I was able to identify that the issue was that the EC2 instances didn't have enough space to download Docker (it was just using root instance volume), and solved the issue from there (booting EC2 with an EBS volume)
 	* Understood the importance of troubleshooting via logs
+- Migrating from EC2/ASG to ECS Fargate
+	* Moving to Fargate eliminated the need to manage EC2 instances, AMIs, launch templates, and user data scripts
+	* The shift required creating two separate IAM roles (execution role vs. task role) to maintain least-privilege, since the EC2 instance profile pattern doesn't apply to Fargate
+	* awsvpc networking mode means each Fargate task gets its own ENI, so the security group model is simpler and more precise than with EC2
 - Making a diagram to represent my infrastructure
 	* A README just giving the workflows and infrastructure are important, but it does not give a first-time looker a holistic view of how the infrastructure welds together
 	* Diagram accomplishes exactly that, reducing the time it takes for someone to understand my project, as well as making the worklfow of it easier to understand
 
 Possible Next Steps
-* Move from ASG to ECS/Fargate
 * Structure flat .tf files into reusable modules (networking, frontend, application, data, monitoring)
 * Add vairables.tf / outputs.tf to remove hardcoded values
-* Update diagram to change static EC2 to ASG (or ECS/Fargate depending on when I complete that), SNS, CloudWatch, etc.
+* Add ECS esrvice autho scaling (Application Auto Scaling with CPU target tracking)
+* Update architecture diagram to reflect the ECS Fargate architecture

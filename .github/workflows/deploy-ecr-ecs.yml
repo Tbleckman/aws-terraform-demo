@@ -1,0 +1,54 @@
+name: Deploy App to ECS
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "app/**"
+            - ".github/workflows/deploy-ecr-ecs.yml"
+
+permissions:
+    id-token: write
+    contents: read
+
+env:
+    AWS_REGION: us-east-1
+    ECR_REPOSITORY: portfolio-app
+    ECS_CLUSTER: portfolio-cluster
+    ECS_SERVICE: portfolio-app-service
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: arn:aws:iam::563224522493:role/GitHubActionsTerraformRole
+                aws-region: ${{ env.AWS_REGION }}
+
+            - name: Login to Amazon ECR
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Build and push Docker image
+              run: |
+                ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                IMAGE_URI=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}
+
+                docker build -t $IMAGE_URI:latest ./app
+                docker tag $IMAGE_URI:latest $IMAGE_URI:${{ github.sha }}
+
+                docker push $IMAGE_URI:latest
+                docker push $IMAGE_URI:${{ github.sha }}
+
+            - name: Force ECS new deployment
+              run: |
+                aws ecs update-service \
+                  --cluster ${{ env.ECS_CLUSTER }} \
+                  --service ${{ env.ECS_SERVICE }} \
+                  --force-new-deployment
