@@ -11,7 +11,7 @@ table = dynamodb.Table("user-handles")
 
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("index.html", hostanme=socket.gethostname())
+    return render_template("index.html", hostname=socket.gethostname())
 
 @app.route("/api/contact", methods=["POST"])
 def contact():

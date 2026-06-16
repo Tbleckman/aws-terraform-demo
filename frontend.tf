@@ -40,11 +40,11 @@ resource "aws_lb" "tf_load_balancer" {
 
 #ALB LISTENER AND TARGET GROUP SETUP
 resource "aws_alb_target_group" "tf_alb_target_group" {
-  name        = "app-instances-target-group"
-  port        = 80
+  name        = "app-fargate-tg"
+  port        = 5000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.terraform_testing.id
-  target_type = "instance"
+  target_type = "ip"
 
   health_check {
     path                = "/"

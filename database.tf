@@ -31,6 +31,8 @@ resource "aws_vpc_endpoint_route_table_association" "dynamodb" {
   route_table_id  = aws_route_table.terraform_private_rt.id
 }
 
+
+/*
 #IAM ROLE SETUP FOR EC2 TO ACCESS DDB
 resource "aws_iam_role" "ec2_ddb_role" {
   name = "ec2-dynamodb-access-role"
@@ -79,3 +81,4 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   name = "ec2-dynamodb-instance-profile"
   role = aws_iam_role.ec2_ddb_role.name
 }
+*/

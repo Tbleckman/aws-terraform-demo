@@ -1,4 +1,5 @@
 #EC2 INSTANCE / ASG CONFIGURATION
+/*
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -90,7 +91,7 @@ resource "aws_autoscaling_policy" "cpu_target_tracking" {
     target_value = 60.0
   }
 }
-
+*/
 
 #MONITORING SECTION FOR HIGH CPU ALARM + UNHEALTHY TARGETS
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
@@ -98,7 +99,7 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
+  namespace           = "AWS/ECS"
   period              = 300
   statistic           = "Average"
   threshold           = 80
@@ -106,8 +107,12 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   alarm_actions             = [aws_sns_topic.cloudwatch_notification.arn]
   ok_actions                = [aws_sns_topic.cloudwatch_notification.arn]
   insufficient_data_actions = [aws_sns_topic.cloudwatch_notification.arn]
-  dimensions                = { AutoScalingGroupName = aws_autoscaling_group.EC2_ASG_GROUP.name }
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.portfolio-app.name
+  }
 }
+
 
 resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
   alarm_name          = "alb-unhealthy-targets"
@@ -130,10 +135,11 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
 
 #LOGGING SECTION FOR WEBSITE
 resource "aws_cloudwatch_log_group" "nginx" {
-  name              = "/portfolio/nginx"
+  name              = "/ecs/portfolio-app"
   retention_in_days = 14 #so it doesnt last forever...
 }
 
+/*
 resource "aws_cloudwatch_log_group" "nginx_access" {
   name              = "/portfolio/nginx/access"
   retention_in_days = 14
@@ -148,7 +154,7 @@ resource "aws_cloudwatch_log_group" "cloud_init" {
   name              = "/portfolio/cloud-init"
   retention_in_days = 14
 }
-
+*/
 
 #SNS TOPIC
 resource "aws_sns_topic" "cloudwatch_notification" {
@@ -161,6 +167,7 @@ resource "aws_sns_topic_subscription" "email_sub" {
   endpoint  = "thomasbleckman@gmail.com"
 }
 
+/*
 #CLOUDWATCH DASHBOARD
 resource "aws_cloudwatch_dashboard" "main" {
   dashboard_name = "asg-performance-dashboard"
@@ -188,6 +195,7 @@ resource "aws_cloudwatch_dashboard" "main" {
     ]
   })
 }
+*/
 
 #Commented out old EC2 instance implementation for ASG instead
 /*
@@ -216,6 +224,7 @@ resource "aws_instance" "ec2_instance2" {
 }
 */
 
+/*
 resource "aws_security_group" "ec2_sg" {
   vpc_id = aws_vpc.terraform_testing.id
 }
@@ -239,3 +248,4 @@ resource "aws_security_group_rule" "ec2_allow_outbound" {
   from_port = 0
   protocol  = "-1"
 }
+*/
