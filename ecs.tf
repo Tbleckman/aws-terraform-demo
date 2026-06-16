@@ -90,7 +90,6 @@ resource "aws_ecs_task_definition" "portfolio_app" {
 
       logConfiguration = {
         logDriver = "awslogs"
-        options   = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs_app.name
           awslogs-region        = "us-east-1"
@@ -132,8 +131,12 @@ resource "aws_ecs_service" "portfolio_app" {
   name            = "portfolio-app-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.portfolio_app.arn
-  desired_count   = 2
+  desired_count   = 1
   launch_type     = "FARGATE"
+
+  lifecycle {
+    ignore_changes = [ desired_count ]
+  }
 
   network_configuration {
     subnets = [
