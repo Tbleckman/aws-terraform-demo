@@ -68,17 +68,17 @@ resource "aws_iam_role_policy" "ecs_dynamodb_access_policy" {
 #ECS TASK DEFINITION
 
 resource "aws_ecs_task_definition" "portfolio_app" {
-  family                   = "portfolio-app"
+  family                   = var.app_name
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = 256
-  memory                   = 512
+  cpu                      = var.ecs_cpu
+  memory                   = var.ecs_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
-      name      = "portfolio-app"
+      name      = var.app_name
       image     = "${aws_ecr_repository.portfolio_app.repository_url}:latest"
       essential = true
 
@@ -92,7 +92,7 @@ resource "aws_ecs_task_definition" "portfolio_app" {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs_app.name
-          awslogs-region        = "us-east-1"
+          awslogs-region        = var.aws_region
           awslogs-stream-prefix = "ecs"
         }
       }
@@ -131,7 +131,7 @@ resource "aws_ecs_service" "portfolio_app" {
   name            = "portfolio-app-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.portfolio_app.arn
-  desired_count   = 1
+  desired_count   = var.ecs_desired_count
   launch_type     = "FARGATE"
 
   lifecycle {
@@ -149,7 +149,7 @@ resource "aws_ecs_service" "portfolio_app" {
 
   load_balancer {
     target_group_arn = aws_alb_target_group.tf_alb_target_group.arn
-    container_name   = "portfolio-app"
+    container_name   = var.app_name
     container_port   = 5000
   }
   depends_on = [aws_alb_listener.https]

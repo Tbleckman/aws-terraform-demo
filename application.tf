@@ -102,7 +102,7 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   namespace           = "AWS/ECS"
   period              = 300
   statistic           = "Average"
-  threshold           = 80
+  threshold           = var.cpu_alarm_threshold
 
   alarm_actions             = [aws_sns_topic.cloudwatch_notification.arn]
   ok_actions                = [aws_sns_topic.cloudwatch_notification.arn]
@@ -120,7 +120,7 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
   evaluation_periods  = 1
   metric_name         = "UnHealthyHostCount"
   namespace           = "AWS/ApplicationELB"
-  period              = 60
+  period              = var.ecs_cpu_scale_target
   statistic           = "Average"
   threshold           = 0
 
@@ -196,7 +196,7 @@ resource "aws_sns_topic_subscription" "email_sub" {
 
 #CLOUDWATCH DASHBOARD
 resource "aws_cloudwatch_dashboard" "main" {
-  dashboard_name = "asg-performance-dashboard"
+  dashboard_name = "ecs-fargate-performance-dashboard"
 
   dashboard_body = jsonencode({
     widgets = [
@@ -214,7 +214,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           period = 300
           stat   = "Average"
-          region = "us-east-1"
+          region = var.aws_region
           title  = "ECS Fargate Core Metrics (CPU, Memory & Task Count)"
           yAxis = {
             left  = { min = 0, label = "Percent / Count" }

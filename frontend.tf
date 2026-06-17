@@ -1,12 +1,12 @@
 #ROUTE 53 SETUP
 data "aws_route53_zone" "main_zone" {
-  name         = "thomasbleckmandev.com"
+  name         = var.domain_name
   private_zone = false
 }
 
 resource "aws_route53_record" "root" {
   zone_id = data.aws_route53_zone.main_zone.id
-  name    = "thomasbleckmandev.com"
+  name    = var.domain_name
   type    = "A"
 
   alias {
@@ -20,7 +20,7 @@ resource "aws_route53_record" "root" {
 
 #EXISTING CERTIFICATE
 data "aws_acm_certificate" "issued" {
-  domain      = "thomasbleckmandev.com"
+  domain      = var.domain_name
   types       = ["AMAZON_ISSUED"]
   statuses    = ["ISSUED"]
   most_recent = true

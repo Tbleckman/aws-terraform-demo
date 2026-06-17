@@ -16,7 +16,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 /*
@@ -50,7 +50,7 @@ resource "aws_s3_bucket_public_access_block" "state_public_block" {
 
 #VPC
 resource "aws_vpc" "terraform_testing" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr
 
   tags = {
     Name = "wsl-demo-vpc"
@@ -101,7 +101,7 @@ resource "aws_route_table" "terraform_private_rt" {
 resource "aws_subnet" "terraform_testing_public_subnet" {
   vpc_id            = aws_vpc.terraform_testing.id
   availability_zone = "us-east-1a"
-  cidr_block        = "10.0.2.0/24"
+  cidr_block        = var.public_subnet_cidrs[0]
 
   tags = {
     Name = "Public-Subnet"
@@ -111,7 +111,7 @@ resource "aws_subnet" "terraform_testing_public_subnet" {
 resource "aws_subnet" "terraform_testing_public_subnet2" {
   vpc_id            = aws_vpc.terraform_testing.id
   availability_zone = "us-east-1b"
-  cidr_block        = "10.0.3.0/24"
+  cidr_block        = var.public_subnet_cidrs[1]
 
   tags = {
     Name = "Public-Subnet2"
@@ -121,7 +121,7 @@ resource "aws_subnet" "terraform_testing_public_subnet2" {
 resource "aws_subnet" "terraform_testing_private_subnet1" {
   vpc_id            = aws_vpc.terraform_testing.id
   availability_zone = "us-east-1a"
-  cidr_block        = "10.0.4.0/24"
+  cidr_block        = var.private_subnet_cidrs[0]
 
   tags = {
     Name = "Private-Subnet1"
@@ -131,7 +131,7 @@ resource "aws_subnet" "terraform_testing_private_subnet1" {
 resource "aws_subnet" "terraform_testing_private_subnet2" {
   vpc_id            = aws_vpc.terraform_testing.id
   availability_zone = "us-east-1b"
-  cidr_block        = "10.0.5.0/24"
+  cidr_block        = var.private_subnet_cidrs[1]
 
   tags = {
     Name = "Private-Subnet2"
@@ -160,8 +160,8 @@ resource "aws_route_table_association" "subnet_routing_private2" {
   subnet_id      = aws_subnet.terraform_testing_private_subnet2.id
 }
 
-#TEMP MOVE BLOCK
 
+#TEMP MOVE BLOCK (from the past)
 moved {
   from = aws_route_table.terraform-rt
   to   = aws_route_table.terraform_rt
