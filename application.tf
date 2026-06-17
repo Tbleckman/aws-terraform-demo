@@ -193,7 +193,7 @@ resource "aws_sns_topic_subscription" "email_sub" {
   endpoint  = "thomasbleckman@gmail.com"
 }
 
-/*
+
 #CLOUDWATCH DASHBOARD
 resource "aws_cloudwatch_dashboard" "main" {
   dashboard_name = "asg-performance-dashboard"
@@ -208,20 +208,24 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/EC2", "CPUUtilization", "AutoScalingGroupName", aws_autoscaling_group.EC2_ASG_GROUP.name],
-            ["AWS/AutoScaling", "GroupInServiceInstances", "AutoScalingGroupName", aws_autoscaling_group.EC2_ASG_GROUP.name]
+            ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.portfolio_app.name],
+            ["AWS/ECS", "MemoryUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.portfolio_app.name, { "yAxis" : "right" }],
+            ["AWS/ECS", "RunningTaskCount", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.portfolio_app.name]
           ]
           period = 300
           stat   = "Average"
           region = "us-east-1"
-          title  = "ASG Core Metrics (Avg CPU & Instance Count)"
-          yAxis  = { left = { min = 0 } }
+          title  = "ECS Fargate Core Metrics (CPU, Memory & Task Count)"
+          yAxis = {
+            left  = { min = 0, label = "Percent / Count" }
+            right = { min = 0, label = "Memory Percent" }
+          }
         }
       }
     ]
   })
 }
-*/
+
 
 #Commented out old EC2 instance implementation for ASG instead
 /*
