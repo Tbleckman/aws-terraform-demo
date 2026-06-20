@@ -108,8 +108,8 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   ok_actions                = [aws_sns_topic.cloudwatch_notification.arn]
   insufficient_data_actions = [aws_sns_topic.cloudwatch_notification.arn]
   dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.portfolio_app.name
+    ClusterName = var.ecs_cluster_name
+    ServiceName = var.ecs_service_name
   }
 }
 
@@ -128,15 +128,15 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
   ok_actions                = [aws_sns_topic.cloudwatch_notification.arn]
   insufficient_data_actions = [aws_sns_topic.cloudwatch_notification.arn]
   dimensions = {
-    TargetGroup  = module.frontend.target_group_arn_suffix
-    LoadBalancer = module.frontend.alb_arn_suffix
+    TargetGroup  = var.target_group_arn_suffix
+    LoadBalancer = var.alb_arn_suffix
   }
 }
 
 resource "aws_appautoscaling_target" "ecs_service" {
   max_capacity       = 4
   min_capacity       = 1
-  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.portfolio_app.name}"
+  resource_id        = "service/${var.ecs_cluster_name}/${var.ecs_service_name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
@@ -190,7 +190,7 @@ resource "aws_sns_topic" "cloudwatch_notification" {
 resource "aws_sns_topic_subscription" "email_sub" {
   topic_arn = aws_sns_topic.cloudwatch_notification.arn
   protocol  = "email"
-  endpoint  = "thomasbleckman@gmail.com"
+  endpoint  = var.alert_email
 }
 
 
@@ -208,9 +208,9 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.portfolio_app.name],
-            ["AWS/ECS", "MemoryUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.portfolio_app.name, { "yAxis" : "right" }],
-            ["AWS/ECS", "RunningTaskCount", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.portfolio_app.name]
+            ["AWS/ECS", "CPUUtilization", "ClusterName", var.ecs_cluster_name, "ServiceName", var.ecs_service_name],
+            ["AWS/ECS", "MemoryUtilization", "ClusterName", var.ecs_cluster_name, "ServiceName", var.ecs_service_name, { "yAxis" : "right" }],
+            ["AWS/ECS", "RunningTaskCount", "ClusterName", var.ecs_cluster_name, "ServiceName", var.ecs_service_name]
           ]
           period = 300
           stat   = "Average"

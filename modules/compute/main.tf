@@ -1,3 +1,13 @@
+#ECR SECTION
+resource "aws_ecr_repository" "portfolio_app" {
+  name = "portfolio-app"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+#ECS SECTION
+
 #MAKE THE ECS CLUSTER
 
 resource "aws_ecs_cluster" "main" {
@@ -58,7 +68,7 @@ resource "aws_iam_role_policy" "ecs_dynamodb_access_policy" {
           "dynamodb:Query",
           "dynamodb:DescribeTable"
         ]
-        Resource = aws_dynamodb_table.tf_ddb.arn
+        Resource = var.dynamodb_table_arn #aws_dynamodb_table.tf_ddb.arn
       }
     ]
 
@@ -104,13 +114,13 @@ resource "aws_ecs_task_definition" "portfolio_app" {
 
 resource "aws_security_group" "ecs_sg" {
   name   = "ecs-fargate-sg"
-  vpc_id = module.networking.vpc_id
+  vpc_id = var.vpc_id
 }
 
 resource "aws_security_group_rule" "ecs_allow_alb" {
   type                     = "ingress"
   security_group_id        = aws_security_group.ecs_sg.id
-  source_security_group_id = module.frontend.alb_sg_id
+  source_security_group_id = var.alb_sg_id
   protocol                 = "tcp"
   from_port                = 5000
   to_port                  = 5000
@@ -139,15 +149,15 @@ resource "aws_ecs_service" "portfolio_app" {
   }
 
   network_configuration {
-    subnets          = module.networking.private_subnet_ids
+    subnets          = var.private_subnet_ids
     security_groups  = [aws_security_group.ecs_sg.id]
     assign_public_ip = false
   }
 
   load_balancer {
-    target_group_arn = module.frontend.target_group_arn
+    target_group_arn = var.target_group_arn
     container_name   = var.app_name
     container_port   = 5000
   }
-  depends_on = [module.frontend]
+  #depends_on = [module.frontend]
 }

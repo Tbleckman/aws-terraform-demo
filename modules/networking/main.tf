@@ -110,9 +110,10 @@ resource "aws_route_table_association" "subnet_routing_private2" {
   subnet_id      = aws_subnet.terraform_testing_private_subnet2.id
 }
 
-
+/*
 #TEMP MOVE BLOCK (from the past)
 moved {
   from = aws_route_table.terraform-rt
   to   = aws_route_table.terraform_rt
 }
+*/
