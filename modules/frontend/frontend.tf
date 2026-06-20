@@ -31,7 +31,7 @@ resource "aws_lb" "tf_load_balancer" {
   name               = "tf-alb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.tf_sg.id]
-  subnets            = [aws_subnet.terraform_testing_public_subnet.id, aws_subnet.terraform_testing_public_subnet2.id]
+  subnets            = var.public_subnet_ids
 
   internal                   = false
   enable_deletion_protection = true
@@ -43,7 +43,7 @@ resource "aws_alb_target_group" "tf_alb_target_group" {
   name        = "app-fargate-tg"
   port        = 5000
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.terraform_testing.id
+  vpc_id      = var.vpc_id
   target_type = "ip"
 
   lifecycle {
@@ -111,7 +111,7 @@ resource "aws_alb_target_group_attachment" "alb_ec2_attachments2" {
 resource "aws_security_group" "tf_sg" {
   name        = "alb_in_out"
   description = "Allow all HTTP(S) traffic and all outbound traffic for alb"
-  vpc_id      = aws_vpc.terraform_testing.id
+  vpc_id      = var.vpc_id
 
   tags = { Name = "alb_in/out" }
 }

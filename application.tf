@@ -128,8 +128,8 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
   ok_actions                = [aws_sns_topic.cloudwatch_notification.arn]
   insufficient_data_actions = [aws_sns_topic.cloudwatch_notification.arn]
   dimensions = {
-    TargetGroup  = aws_alb_target_group.tf_alb_target_group.arn_suffix
-    LoadBalancer = aws_lb.tf_load_balancer.arn_suffix
+    TargetGroup  = module.frontend.target_group_arn_suffix
+    LoadBalancer = module.frontend.alb_arn_suffix
   }
 }
 

@@ -104,13 +104,13 @@ resource "aws_ecs_task_definition" "portfolio_app" {
 
 resource "aws_security_group" "ecs_sg" {
   name   = "ecs-fargate-sg"
-  vpc_id = aws_vpc.terraform_testing.id
+  vpc_id = module.networking.vpc_id
 }
 
 resource "aws_security_group_rule" "ecs_allow_alb" {
   type                     = "ingress"
   security_group_id        = aws_security_group.ecs_sg.id
-  source_security_group_id = aws_security_group.tf_sg.id
+  source_security_group_id = module.frontend.alb_sg_id
   protocol                 = "tcp"
   from_port                = 5000
   to_port                  = 5000
@@ -139,18 +139,15 @@ resource "aws_ecs_service" "portfolio_app" {
   }
 
   network_configuration {
-    subnets = [
-      aws_subnet.terraform_testing_private_subnet1.id,
-      aws_subnet.terraform_testing_private_subnet2.id
-    ]
+    subnets          = module.networking.private_subnet_ids
     security_groups  = [aws_security_group.ecs_sg.id]
     assign_public_ip = false
   }
 
   load_balancer {
-    target_group_arn = aws_alb_target_group.tf_alb_target_group.arn
+    target_group_arn = module.frontend.target_group_arn
     container_name   = var.app_name
     container_port   = 5000
   }
-  depends_on = [aws_alb_listener.https]
+  depends_on = [module.frontend]
 }

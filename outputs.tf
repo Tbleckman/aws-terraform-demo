@@ -1,6 +1,6 @@
 output "alb_dns_name" {
   description = "DNS name of the ALB"
-  value       = aws_lb.tf_load_balancer.dns_name
+  value       = module.frontend.alb_dns_name
 }
 
 output "ecr_repository_url" {
@@ -20,5 +20,5 @@ output "dynamodb_table_name" {
 
 output "vpc_id" {
   description = "ID of the VPC"
-  value       = aws_vpc.terraform_testing.id
+  value       = module.networking.vpc_id
 }

@@ -20,7 +20,7 @@ data "aws_prefix_list" "dynamodb" {
 
 resource "aws_vpc_endpoint" "dynamodb" {
   vpc_endpoint_type = "Gateway"
-  vpc_id            = aws_vpc.terraform_testing.id
+  vpc_id            = module.networking.vpc_id
   service_name      = "com.amazonaws.${data.aws_region.cur.name}.dynamodb"
 
   tags = { Name = "dynamodb-gateway-endpoint" }
@@ -28,7 +28,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
 
 resource "aws_vpc_endpoint_route_table_association" "dynamodb" {
   vpc_endpoint_id = aws_vpc_endpoint.dynamodb.id
-  route_table_id  = aws_route_table.terraform_private_rt.id
+  route_table_id  = module.networking.private_route_table_id
 }
 
 
