@@ -91,8 +91,8 @@
       />
       <p>
         This diagram shows the request flow from Route 53 and the Application Load Balancer
-        to private EC2 instances running Nginx and Flask, with form submissions written to
-        DynamoDB through a Gateway VPC Endpoint.
+        to private ECS Fargate tasks running a containerized Flask application, with form submissions
+        written to DynamoDB through a Gateway VPC Endpoint.
       </p>
     </section>
 
@@ -101,18 +101,19 @@
     <section class="card">
       <h2>About This Project</h2>
       <p>
-        This website is being served from an EC2 instance provisioned with Terraform.
+        This website is served from an ECS Fargate service provisioned with Terraform.
         Traffic is routed through an Application Load Balancer as part of a multi-tier AWS architecture.
-        EC2 instances communicate with DynamoDB through Flask to store user handles. Infrastructure is automatically validated
-        and applied through GitHub Actions.
+        The containerized Flask application writes contact form submissions to DynamoDB.
+        Infrastructure and application deployments are automated through GitHub Actions.
       </p>
     </section>
 
     <section class="card">
       <h2>Architecture</h2>
       <p>
-        Current stack includes a custom VPC, public subnets, private application instances,
-        security groups, an ALB, Route 53, ACM, Nginx running on EC2 with Flask, and DynamoDB
+        Current stack includes a custom VPC, public subnets, private subnets, security groups,
+        an Application Load Balancer, Route 53, ACM, ECS Fargate, ECR, Docker, CloudWatch Logs,
+        DynamoDB, and a DynamoDB Gateway VPC Endpoint.
       </p>
     </section>
 
@@ -121,11 +122,15 @@
       <div class="tech">
         <span>AWS</span>
         <span>Terraform</span>
-        <span>EC2</span>
+        <span>ECS Fargate</span>
+        <span>ECR</span>
+        <span>Docker</span>
+        <span>CloudWatch</span>
+        <span>SNS</span>
+        <span>Terraform Modules</span>
         <span>ALB</span>
         <span>Route 53</span>
         <span>ACM</span>
-        <span>Nginx</span>
         <span>Flask</span>
         <span>Internet Gateway</span>
         <span>NAT Gateway</span>
@@ -137,8 +142,8 @@
     </section>
 
     <section class="card">
-      <h2>Instance Info</h2>
-      <p>This page is being served from instance: <strong>{{hostname}}</strong></p>
+      <h2>Container Info</h2>
+      <p>This page is being served from container host: <strong>{{hostname}}</strong></p>
     </section>
 
     <section class="card">
