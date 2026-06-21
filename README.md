@@ -17,7 +17,7 @@ Brief Architecture Rundown:
 - Public Subnets across two Availability Zones
 
 ### Application Tier
-- ECS Fargate service (2 tasks) across private subnets in two AZs
+- ECS Fargate service (1-4 tasks) across private subnets in two AZs
 - Fargate tasks run the containerized Flask app pulled directly from ECR
 - Separate IAM roles for task execution and task runtime (least-privilege)
 
@@ -61,7 +61,7 @@ Infrastructure Details:
 	* Target group (type:ip) performs health checks and routes traffic to ASG instances on port 5000
 
 - Application
-	* ECS Fargate service (desired count: 2) spans both private subnets
+	* ECS Fargate service (desired count: 1) spans both private subnets
 	* Tasks use awsvpc networking mode -- each task gets its own ENI and private IP
 	* Fargate pulls the portfolio-app image from ECR on task startup (no EC2, no user data)
 	* Each task runs a Flask app (via Guinicorn) on port 5000
@@ -118,8 +118,10 @@ CI/CD:
 - Making a diagram to represent my infrastructure
 	* A README just giving the workflows and infrastructure are important, but it does not give a first-time looker a holistic view of how the infrastructure welds together
 	* Diagram accomplishes exactly that, reducing the time it takes for someone to understand my project, as well as making the worklfow of it easier to understand
+- Turning code into modules
+	* With me learning terraform as I've worked on this project, I lacked the intuition of making the actual components of this infrastructure reusable. Upon learning and implementing it, however, I understand its importance; I have more standardized attributes across the components leading to less confusion.
+	* Additionally, now that the components are isolated in their own modules, it makes finding and seeing each aspect of the infrastructure easier to comprehend.
+	* Now understanding the amount of reusability, simplicity, and scalability with modules, I wish I would have implemented it sooner rather than later. Therefore, organizing a terraform project such as this into modules in the beginning is also a crucial lesson.
 
 Possible Next Steps
-* Structure flat .tf files into reusable modules (networking, frontend, application, data, monitoring)
-* Add vairables.tf / outputs.tf to remove hardcoded values
 * Update architecture diagram to reflect the ECS Fargate architecture
