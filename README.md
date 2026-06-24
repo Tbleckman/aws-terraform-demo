@@ -120,4 +120,4 @@ CI/CD:
 	* Diagram accomplishes exactly that, reducing the time it takes for someone to understand my project, as well as making the worklfow of it easier to understand
 
 Possible Next Steps
-* Update architecture diagram to reflect the ECS Fargate architecture
+* Add more content to the website
